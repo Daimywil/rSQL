@@ -1,0 +1,15 @@
+{
+    "name": "rSQL",
+    "tree": {
+        "$className": "DataModel",
+        "ServerScriptService": {
+            "$ignoreUnknownInstances": true,
+            "rSQL": {
+                "Packages": {
+                    "$path": "Packages"
+                },
+                "$path": "src"
+            }
+        }
+    }
+}
