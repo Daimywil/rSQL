@@ -17,7 +17,6 @@ return function()
     React.useEffect(function()
         if isActive then
             commandBarPositionMotion:spring(1)
-            commandLineRef.current:CaptureFocus()
         else
             commandBarPositionMotion:spring(0)
         end
@@ -45,6 +44,7 @@ return function()
                 return
             end
             setActive(true)
+            commandLineRef.current:CaptureFocus()
         end)
 
         return function()

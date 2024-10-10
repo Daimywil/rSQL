@@ -55,14 +55,12 @@ function Scanner._ScanToken(self: Types.Scanner)
         -- ignore tab
     elseif char == "\n" then
         self._line += 1
+    elseif self:_IsDigit(char) then
+        self:_Number()
+    elseif self:_IsAlpha(char) then
+        self:_Identifier()
     else
-        if self:_IsDigit(char) then
-            self:_Number()
-        elseif self:_IsAlpha(char) then
-            self:_Identifier()
-        else
-            rSQL.Error(self._line, "Unexpected character.")
-        end
+        rSQL.Error(self._line, "Unexpected character.")
     end
 end
 

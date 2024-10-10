@@ -13,7 +13,7 @@ function Token.new(type: Types.TokenType, lexeme: string, literal: any, line: nu
 end
 
 function Token.__tostring(self: Types.Token): string
-    return self.Type .. " " .. self.Lexeme .. " " .. self.Literal
+    return `({self.Type}, {self.Lexeme}, {self.Literal})`
 end
 
 return Token
