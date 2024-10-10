@@ -33,9 +33,11 @@ export type Scanner = {
 
     _String: (self: Scanner) -> nil,
     _Number: (self: Scanner) -> nil,
+    _Identifier: (self: Scanner) -> nil,
 
     _IsDigit: (self: Scanner, char: string) -> boolean,
     _IsAlpha: (self: Scanner, char: string) -> boolean,
+    _IsAlphaNumeric: (self: Scanner, char: string) -> boolean,
     
     Source: string,
 

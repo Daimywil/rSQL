@@ -18,6 +18,17 @@ return {
 	LESS = "LESS",
 	LESS_EQUAL = "LESS_EQUAL",
 
+    SELECT = "SELECT",
+    UPDATE = "UPDATE",
+    DELETE = "DELETE",
+    INSERT = "INSERT",
+
+    FROM = "FROM",
+    WHERE = "WHERE",
+    SET = "SET",
+    INTO = "INTO",
+    VALUES = "VALUES",
+
 	IDENTIFIER = "IDENTIFIER",
 	STRING = "STRING",
 	NUMBER = "NUMBER",

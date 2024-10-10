@@ -1,8 +1,8 @@
 local Types = require(script.Parent.Parent.Types)
 
 local Token = require(script.Parent.Token) :: Types.Token
-local TokenType = require(script.Parent.Enums.TokenType) :: Types.TokenTypeEnum
-local rSQL = require(script.Parent.Parent.rSQL) :: Types.rSQL
+local TokenType = require(script.Parent.Parent.Enums.TokenType) :: Types.TokenTypeEnum
+local rSQL = require(script.Parent.rSQL) :: Types.rSQL
 
 local Scanner = {}
 Scanner.__index = Scanner
@@ -23,7 +23,7 @@ function Scanner.ScanTokens(self: Types.Scanner): { Types.Token }
         self:_ScanToken()
     end
 
-    table.insert(Token.new(TokenType.EOF, "", nil, self._line))
+    table.insert(self._tokens, Token.new(TokenType.EOF, "", nil, self._line))
     return self._tokens
 end
 
@@ -58,6 +58,8 @@ function Scanner._ScanToken(self: Types.Scanner)
     else
         if self:_IsDigit(char) then
             self:_Number()
+        elseif self:_IsAlpha(char) then
+            self:_Identifier()
         else
             rSQL.Error(self._line, "Unexpected character.")
         end
@@ -90,7 +92,11 @@ function Scanner._IsDigit(self: Types.Scanner, char: string): boolean
 end
 
 function Scanner._IsAlpha(self: Types.Scanner, char: string): boolean
-    return char:match("%a") ~= nil
+    return char:match("%a") ~= nil or char == "_"
+end
+
+function Scanner._IsAlphaNumeric(self: Types.Scanner, char: string): boolean
+    return self:_IsAlpha(char) or self:_IsDigit(char)
 end
 
 function Scanner._Number(self: Types.Scanner)
@@ -109,6 +115,33 @@ function Scanner._Number(self: Types.Scanner)
     end
 
     self:_AddToken(TokenType.NUMBER, tonumber(string.sub(self.Source, self._start, self._current - 1)))
+end
+
+function Scanner._Identifier(self: Types.Scanner)
+    while self:_IsAlphaNumeric(self:_Peek()) do
+        self:_Advance()
+    end
+
+    local keywords = {
+        ["and"] = TokenType.AND,
+        ["or"] = TokenType.OR,
+        ["nil"] = TokenType.NIL,
+        ["false"] = TokenType.FALSE,
+        ["true"] = TokenType.TRUE,
+        ["select"] = TokenType.SELECT,
+        ["update"] = TokenType.UPDATE,
+        ["delete"] = TokenType.DELETE,
+        ["insert"] = TokenType.INSERT,
+        ["from"] = TokenType.FROM,
+        ["where"] = TokenType.WHERE,
+        ["set"] = TokenType.SET,
+        ["into"] = TokenType.INTO,
+        ["values"] = TokenType.VALUES,
+    }
+
+    local text = string.sub(self.Source, self._start, self._current - 1)
+    local tokenType = keywords[text:lower()] or TokenType.IDENTIFIER
+    self:_AddToken(tokenType)
 end
 
 function Scanner._Peek(self: Types.Scanner): string
