@@ -5,6 +5,7 @@ end
 local Types = require(script.Parent.Parent.Types)
 
 local AstPrinter = require(script.Parent.AstPrinter) :: Types.AstPrinter
+local Parser = require(script.Parent.Parser) :: Types.Parser
 
 local BinaryExpression = require(script.Parent.Expressions.BinaryExpression) :: Types.BinaryExpression
 local GroupingExpression = require(script.Parent.Expressions.GroupingExpression) :: Types.GroupingExpression

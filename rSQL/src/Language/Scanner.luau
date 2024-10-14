@@ -11,8 +11,8 @@ function Scanner.new(source: string): Types.Scanner
     local self = setmetatable({} :: Types.Scanner, Scanner)
     self.Source = source
     self._tokens = {}
-    self._start = 0
-    self._current = 0
+    self._start = 1
+    self._current = 1
     self._line = 1
     return self
 end
@@ -180,7 +180,7 @@ function Scanner._AddToken(self: Types.Scanner, type: Types.TokenType, literal: 
 end
 
 function Scanner._IsAtEnd(self: Types.Scanner): boolean
-    return self._current >= #self.Source
+    return self._current > #self.Source
 end
 
 return Scanner

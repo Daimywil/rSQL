@@ -3,10 +3,43 @@ export type TokenType = string
 export type TokenTypeEnum = typeof(require(script.Parent.Enums.TokenType))
 
 export type rSQL = {
-    Error: (line: number, message: string) -> nil,
+    HadError: boolean,
+
+    Error: (tokenOrLineNumber: Token | number, message: string) -> nil,
+    _Report: (line: number, where: string, message: string) -> nil,
 }
 
--- scanner
+-- parser
+
+export type Parser = {
+    new: (tokens: { Token }) -> Parser,
+    _tokens: { Token },
+    _current: number,
+
+    Parse: (self: Parser) -> Expression?,
+
+    _Expression: (self: Parser) -> Expression,
+    _Equality: (self: Parser) -> Expression,
+    _Comparison: (self: Parser) -> Expression,
+    _Term: (self: Parser) -> Expression,
+    _Factor: (self: Parser) -> Expression,
+    _Unary: (self: Parser) -> Expression,
+    _Primary: (self: Parser) -> Expression,
+
+    _Match: (self: Parser, ...TokenType) -> boolean,
+    _Check: (self: Parser, type: TokenType) -> boolean,
+    _Advance: (self: Parser) -> Token,
+    _IsAtEnd: (self: Parser) -> boolean,
+    _Peek: (self: Parser) -> Token,
+    _Previous: (self: Parser) -> Token,
+    _Consume: (self: Parser, type: TokenType, message: string) -> Token,
+    _Error: (self: Parser, token: Token, message: string) -> nil,
+    _Synchronize: (self: Parser) -> nil,
+}
+
+-- end parser
+
+-- scanner (lexer)
 
 export type Token = {
     new: (type: TokenType, lexeme: string, literal: any, line: number) -> Token,
@@ -58,7 +91,7 @@ export type Visitor<T = any> = {
 }
 
 export type Expression<T = any> = {
-    new: () -> Expression<T>, -- actually exists but optionally leave this out for now so that the superclasses constructors properly get their typings
+    -- new: () -> Expression<T>, -- actually exists but optionally leave this out for now so that the superclasses constructors properly get their typings
 
     -- the below should be implemented for each class inheriting from Expression
     -- visitor doesnt use the Visitor type because of recursive type restrictions :(
