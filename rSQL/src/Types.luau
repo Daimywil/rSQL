@@ -6,6 +6,8 @@ export type rSQL = {
     Error: (line: number, message: string) -> nil,
 }
 
+-- scanner
+
 export type Token = {
     new: (type: TokenType, lexeme: string, literal: any, line: number) -> Token,
     Type: TokenType,
@@ -42,6 +44,59 @@ export type Scanner = {
     Source: string,
 
     ScanTokens: (self: Scanner) -> { Token },
+}
+
+-- end scanner
+
+-- expressions
+
+export type Visitor<T = any> = {
+    VisitBinaryExpression: (self: Visitor<T>, expression: BinaryExpression) -> T,
+    VisitGroupingExpression: (self: Visitor<T>, expression: GroupingExpression) -> T,
+    VisitLiteralExpression: (self: Visitor<T>, expression: LiteralExpression) -> T,
+    VisitUnaryExpression: (self: Visitor<T>, expression: UnaryExpression) -> T,
+}
+
+export type Expression<T = any> = {
+    new: () -> Expression<T>, -- actually exists but optionally leave this out for now so that the superclasses constructors properly get their typings
+
+    -- the below should be implemented for each class inheriting from Expression
+    -- visitor doesnt use the Visitor type because of recursive type restrictions :(
+    Accept: (self: Expression<T>, visitor: any) -> T,
+
+    __tostring: (self: Expression<T>) -> string,
+}
+
+export type BinaryExpression = Expression & {
+    new: (left: Expression, operator: Token, right: Expression) -> BinaryExpression,
+    Left: Expression,
+    Operator: Token,
+    Right: Expression,
+}
+
+export type GroupingExpression = Expression & {
+    new: (expression: Expression) -> GroupingExpression,
+    Expression: Expression,
+}
+
+export type LiteralExpression = Expression & {
+    new: (value: any) -> LiteralExpression,
+    Value: any,
+}
+
+export type UnaryExpression = Expression & {
+    new: (operator: Token, right: Expression) -> UnaryExpression,
+    Operator: Token,
+    Right: Expression,
+}
+
+-- end expressions
+
+export type AstPrinter = Visitor<string> & {
+    new: () -> AstPrinter,
+    Print: (self: AstPrinter, expression: Expression) -> string,
+
+    Parenthesize: (self: AstPrinter, name: string, ...Expression) -> string,
 }
 
 return nil
