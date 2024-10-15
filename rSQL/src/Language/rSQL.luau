@@ -1,10 +1,43 @@
 local Types = require(script.Parent.Parent.Types)
 
-local TokenType = require(script.Parent.Parent.Enums.TokenType) :: Types.TokenTypeEnum
+local TokenType = require(script.Parent.Parent.Enums.TokenType)
 
 local rSQL = {} :: Types.rSQL
 
 rSQL.HadError = false
+rSQL.HadRuntimeError = false
+
+function rSQL.Run(source: string)
+    rSQL.HadError = false
+    rSQL.HadRuntimeError = false
+
+    local Interpreter = require(script.Parent.Interpreter :: any) :: Types.Interpreter -- circular dependency
+    local Scanner = require(script.Parent.Scanner)
+    local Parser = require(script.Parent.Parser)
+
+    local interpreter = Interpreter.new()
+    local scanner = Scanner.new(source)
+
+    if rSQL.HadError then
+        return
+    end
+
+    local tokens = scanner:ScanTokens()
+    local parser = Parser.new(tokens)
+    local expression = parser:Parse()
+
+    if rSQL.HadError then
+        return
+    end
+
+    interpreter:Interpret(expression)
+
+    if rSQL.HadRuntimeError then
+        return
+    end
+
+    print("Success!")
+end
 
 function rSQL.Error(tokenOrLineNumber: Types.Token | number, message: string)
     if typeof(tokenOrLineNumber) == "number" then
@@ -17,6 +50,11 @@ function rSQL.Error(tokenOrLineNumber: Types.Token | number, message: string)
     else
         rSQL._Report(tokenOrLineNumber.Line, `at '{tokenOrLineNumber.Lexeme}'`, message)
     end
+end
+
+function rSQL.RuntimeError(err: Types.RuntimeError)
+    warn(`[rSQL] {err.Message}\n[line {err.Token.Line}]`)
+    rSQL.HadRuntimeError = true
 end
 
 function rSQL._Report(line: number, where: string, message: string)

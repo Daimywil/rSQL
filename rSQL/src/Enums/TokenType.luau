@@ -9,7 +9,6 @@ return {
 	SLASH = "SLASH",
 	STAR = "STAR",
 
-	BANG = "BANG",
 	BANG_EQUAL = "BANG_EQUAL",
 	EQUAL = "EQUAL",
 	EQUAL_EQUAL = "EQUAL_EQUAL",
@@ -17,6 +16,10 @@ return {
 	GREATER_EQUAL = "GREATER_EQUAL",
 	LESS = "LESS",
 	LESS_EQUAL = "LESS_EQUAL",
+
+    NOT = "NOT",
+
+    CONCAT = "CONCAT",
 
     SELECT = "SELECT",
     UPDATE = "UPDATE",

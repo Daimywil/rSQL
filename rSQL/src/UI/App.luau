@@ -6,8 +6,7 @@ local React = require(script.Parent.Parent.Packages.React)
 
 local useMotion = require(script.Parent.Hooks.UseMotion)
 
-local Scanner = require(script.Parent.Parent.Language.Scanner) :: Types.Scanner
-local Parser = require(script.Parent.Parent.Language.Parser) :: Types.Parser
+local rSQL = require(script.Parent.Parent.Language.rSQL) :: Types.rSQL
 
 return function()
     local isActive, setActive = React.useState(false)
@@ -28,7 +27,7 @@ return function()
     React.useEffect(function()
         commandLineRef.current.FocusLost:Connect(function(enterPressed)
             if enterPressed then
-                print(Parser.new(Scanner.new(commandLineRef.current.Text):ScanTokens()):Parse())
+                rSQL.Run(commandLineRef.current.Text)
             else
                 setActive(false)
             end

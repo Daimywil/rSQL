@@ -1,7 +1,7 @@
 local Types = require(script.Parent.Parent.Types)
 
 local Token = require(script.Parent.Token) :: Types.Token
-local TokenType = require(script.Parent.Parent.Enums.TokenType) :: Types.TokenTypeEnum
+local TokenType = require(script.Parent.Parent.Enums.TokenType)
 local rSQL = require(script.Parent.rSQL) :: Types.rSQL
 
 local Scanner = {}
@@ -36,7 +36,7 @@ function Scanner._ScanToken(self: Types.Scanner)
     elseif char == "," then
         self:_AddToken(TokenType.COMMA)
     elseif char == "." then
-        self:_AddToken(TokenType.DOT)
+        self:_AddToken(self:_Match(".") and TokenType.CONCAT or TokenType.DOT)
     elseif char == "-" then
         self:_AddToken(TokenType.MINUS)
     elseif char == "+" then
@@ -45,6 +45,30 @@ function Scanner._ScanToken(self: Types.Scanner)
         self:_AddToken(TokenType.SEMICOLON)
     elseif char == "*" then
         self:_AddToken(TokenType.STAR)
+    elseif char == "=" then
+        if self:_Match("=") then
+            self:_AddToken(TokenType.EQUAL_EQUAL)
+        else
+            self:_AddToken(TokenType.EQUAL)
+        end
+    elseif char == "~" then
+        if self:_Match("=") then
+            self:_AddToken(TokenType.BANG_EQUAL)
+        else
+            rSQL.Error(self._line, "Unexpected character.")
+        end
+    elseif char == ">" then
+        if self:_Match("=") then
+            self:_AddToken(TokenType.GREATER_EQUAL)
+        else
+            self:_AddToken(TokenType.GREATER)
+        end
+    elseif char == "<" then
+        if self:_Match("=") then
+            self:_AddToken(TokenType.LESS_EQUAL)
+        else
+            self:_AddToken(TokenType.LESS)
+        end
     elseif char == '"' then
         self:_String()
     elseif char == " " then
@@ -135,6 +159,7 @@ function Scanner._Identifier(self: Types.Scanner)
         ["set"] = TokenType.SET,
         ["into"] = TokenType.INTO,
         ["values"] = TokenType.VALUES,
+        ["not"] = TokenType.NOT,
     }
 
     local text = string.sub(self.Source, self._start, self._current - 1)

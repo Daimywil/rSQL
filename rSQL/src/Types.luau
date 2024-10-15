@@ -1,11 +1,21 @@
 export type TokenType = string
 
-export type TokenTypeEnum = typeof(require(script.Parent.Enums.TokenType))
+export type RuntimeError = {
+    Message: string,
+    Token: Token,
+}
 
 export type rSQL = {
+    Run: (source: string) -> nil,
+
+    _Interpreter: Interpreter,
+
     HadError: boolean,
+    HadRuntimeError: boolean,
 
     Error: (tokenOrLineNumber: Token | number, message: string) -> nil,
+    RuntimeError: (err: RuntimeError) -> nil,
+
     _Report: (line: number, where: string, message: string) -> nil,
 }
 
@@ -130,6 +140,19 @@ export type AstPrinter = Visitor<string> & {
     Print: (self: AstPrinter, expression: Expression) -> string,
 
     Parenthesize: (self: AstPrinter, name: string, ...Expression) -> string,
+}
+
+export type Interpreter = Visitor<any> & { -- any because the interpreter can produce any type of value (strings, numbers etc)
+    new: () -> Interpreter,
+
+    Interpret: (self: Interpreter, expression: Expression) -> any,
+
+    _IsTruthy: (self: Interpreter, value: any) -> boolean,
+    _IsEqual: (self: Interpreter, a: any, b: any) -> boolean,
+    _CheckNumberOperand: (self: Interpreter, operator: Token, operand: any) -> (),
+    _CheckNumberOperands: (self: Interpreter, operator: Token, left: any, right: any) -> (),
+    _Error: (self: Interpreter, token: Token, message: string) -> (),
+    _Evaluate: (self: Interpreter, expression: Expression) -> any,
 }
 
 return nil
