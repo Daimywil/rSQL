@@ -14,7 +14,7 @@ function BinaryExpression.new(left: Types.Expression, operator: Types.Token, rig
     return self
 end
 
-function BinaryExpression.Accept(self: Types.BinaryExpression, visitor: Types.Visitor)
+function BinaryExpression.Accept(self: Types.BinaryExpression, visitor: Types.ExpressionVisitor)
     return visitor:VisitBinaryExpression(self)
 end
 

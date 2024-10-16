@@ -19,11 +19,10 @@ function Parser.new(tokens: { Types.Token }): Types.Parser
     return self
 end
 
-function Parser.Parse(self: Types.Parser): Types.Expression?
+function Parser.Parse(self: Types.Parser): { Types.Statement } 
     local statements = {} :: { Types.Statement }
     while not self:_IsAtEnd() do
-        local statement = self:_Statement()
-        table.insert(statements, statement)
+        table.insert(statements, self:_Statement())
     end
 
     return statements

@@ -12,7 +12,7 @@ function LiteralExpression.new(value: any)
     return self
 end
 
-function LiteralExpression.Accept(self: Types.LiteralExpression, visitor: Types.Visitor)
+function LiteralExpression.Accept(self: Types.LiteralExpression, visitor: Types.ExpressionVisitor)
     return visitor:VisitLiteralExpression(self)
 end
 

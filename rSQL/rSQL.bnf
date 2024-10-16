@@ -1,0 +1,11 @@
+program ::= queryStatement* EOF
+
+queryStatement ::= selectStatement
+
+selectStatement ::= "SELECT" IDENTIFIER "FROM" IDENTIFIER whereClause?
+
+whereClause ::= "WHERE" condition*
+
+condition ::= IDENTIFIER "=" IDENTIFIER
+
+literal ::= 'nil' | 'false' | 'true' | NUMBER | STRING

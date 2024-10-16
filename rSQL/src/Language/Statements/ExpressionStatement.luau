@@ -12,7 +12,7 @@ function ExpressionStatement.new(expression: Types.Expression)
     return self
 end
 
-function ExpressionStatement.Accept(self: Types.ExpressionStatement, visitor: Types.Visitor)
+function ExpressionStatement.Accept(self: Types.ExpressionStatement, visitor: Types.ExpressionVisitor)
     return visitor:VisitExpressionStatement(self)
 end
 

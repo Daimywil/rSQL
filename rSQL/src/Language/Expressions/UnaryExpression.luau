@@ -13,7 +13,7 @@ function UnaryExpression.new(operator: Types.Token, right: Types.Expression)
     return self
 end
 
-function UnaryExpression.Accept(self: Types.UnaryExpression, visitor: Types.Visitor)
+function UnaryExpression.Accept(self: Types.UnaryExpression, visitor: Types.ExpressionVisitor)
     return visitor:VisitUnaryExpression(self)
 end
 

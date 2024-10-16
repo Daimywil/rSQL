@@ -13,7 +13,7 @@ function rSQL.Run(source: string)
 
     local Interpreter = require(script.Parent.Interpreter :: any) :: Types.Interpreter -- circular dependency
     local Scanner = require(script.Parent.Scanner)
-    local Parser = require(script.Parent.Parser)
+    local Parser = require(script.Parent.Parser)  
 
     local interpreter = Interpreter.new()
     local scanner = Scanner.new(source)
@@ -24,13 +24,13 @@ function rSQL.Run(source: string)
 
     local tokens = scanner:ScanTokens()
     local parser = Parser.new(tokens)
-    local expression = parser:Parse()
+    local statements = parser:Parse()
 
     if rSQL.HadError then
         return
     end
 
-    interpreter:Interpret(expression)
+    interpreter:Interpret(statements)
 
     if rSQL.HadRuntimeError then
         return

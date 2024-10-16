@@ -12,11 +12,14 @@ function Interpreter.new(type: Types.TokenType, lexeme: string, literal: any, li
     return self
 end
 
-function Interpreter.Interpret(self: Types.Interpreter, expression: Types.Expression)
-    local success, result = pcall(self._Evaluate, self, expression)
-    if success then
-        print(tostring(result))
-    else
+function Interpreter.Interpret(self: Types.Interpreter, statements: { Types.Statement }): ()
+    local success, result = pcall(function()
+        for _, statement in statements do
+            self:_Execute(statement)
+        end
+    end)
+
+    if not success then
         rSQL.RuntimeError(result)
     end
 end
@@ -124,6 +127,10 @@ end
 
 function Interpreter._Evaluate(self: Types.Interpreter, expression: Types.Expression): any
     return expression:Accept(self)
+end
+
+function Interpreter._Execute(self: Types.Interpreter, statement: Types.Statement): ()
+    statement:Accept(self)
 end
 
 return Interpreter

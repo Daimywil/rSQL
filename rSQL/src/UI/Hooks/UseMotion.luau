@@ -13,10 +13,7 @@ return function<T>(initialValue: T)
 	local binding, setValue = React.useBinding(initialValue);
 
 	useEventListener(RunService.Heartbeat, function(delta: number)
-		-- because i made the mistake of connecting 2 heartbeats and stepping the motion twice, all the spring motions got messed up because they're now 50% the speed
-		-- so we're just going to speed up the spring by 2
-		-- springs are just twice as fast but it shouldnt have any other impact (i hope)
-		local newValue = motion:step(delta * 2)
+		local newValue = motion:step(delta)
 
 		if newValue ~= binding:getValue() then
 			setValue(newValue);

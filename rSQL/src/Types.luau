@@ -26,7 +26,7 @@ export type Parser = {
     _tokens: { Token },
     _current: number,
 
-    Parse: (self: Parser) -> Expression?,
+    Parse: (self: Parser) -> { Statement},
 
     _Expression: (self: Parser) -> Expression,
     _Equality: (self: Parser) -> Expression,
@@ -97,11 +97,16 @@ export type Scanner = {
 
 -- expressions
 
-export type Visitor<T = any> = {
-    VisitBinaryExpression: (self: Visitor<T>, expression: BinaryExpression) -> T,
-    VisitGroupingExpression: (self: Visitor<T>, expression: GroupingExpression) -> T,
-    VisitLiteralExpression: (self: Visitor<T>, expression: LiteralExpression) -> T,
-    VisitUnaryExpression: (self: Visitor<T>, expression: UnaryExpression) -> T,
+export type ExpressionVisitor<T = any> = {
+    VisitBinaryExpression: (self: ExpressionVisitor<T>, expression: BinaryExpression) -> T,
+    VisitGroupingExpression: (self: ExpressionVisitor<T>, expression: GroupingExpression) -> T,
+    VisitLiteralExpression: (self: ExpressionVisitor<T>, expression: LiteralExpression) -> T,
+    VisitUnaryExpression: (self: ExpressionVisitor<T>, expression: UnaryExpression) -> T,
+}
+
+export type StatementVisitor<T = any> = {
+    VisitExpressionStatement: (self: StatementVisitor<T>, statement: ExpressionStatement) -> T,
+    VisitSelectStatement: (self: StatementVisitor<T>, statement: SelectStatement) -> T,
 }
 
 export type Expression<T = any> = {
@@ -153,18 +158,23 @@ export type ExpressionStatement = Statement & {
     Expression: Expression
 }
 
+export type SelectStatement = Statement & {
+    new: (expression: Expression) -> SelectStatement,
+    Expression: Expression
+}
+
 -- end statements
 
 -- end expressions
 
-export type AstPrinter = Visitor<string> & {
+export type AstPrinter = ExpressionVisitor<string> & {
     new: () -> AstPrinter,
     Print: (self: AstPrinter, expression: Expression) -> string,
 
     Parenthesize: (self: AstPrinter, name: string, ...Expression) -> string,
 }
 
-export type Interpreter = Visitor<any> & { -- any because the interpreter can produce any type of value (strings, numbers etc)
+export type Interpreter = ExpressionVisitor<any> & StatementVisitor<nil> & { -- any because the interpreter can produce any type of value (strings, numbers etc)
     new: () -> Interpreter,
 
     Interpret: (self: Interpreter, expression: Expression) -> any,
@@ -175,6 +185,7 @@ export type Interpreter = Visitor<any> & { -- any because the interpreter can pr
     _CheckNumberOperands: (self: Interpreter, operator: Token, left: any, right: any) -> (),
     _Error: (self: Interpreter, token: Token, message: string) -> (),
     _Evaluate: (self: Interpreter, expression: Expression) -> any,
+    _Execute: (self: Interpreter, statement: Statement) -> nil,
 }
 
 return nil

@@ -12,7 +12,7 @@ function GroupingExpression.new(expression: Types.Expression)
     return self
 end
 
-function GroupingExpression.Accept(self: Types.GroupingExpression, visitor: Types.Visitor)
+function GroupingExpression.Accept(self: Types.GroupingExpression, visitor: Types.ExpressionVisitor)
     return visitor:VisitGroupingExpression(self)
 end
 
