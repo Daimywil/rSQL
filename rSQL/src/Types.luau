@@ -36,6 +36,10 @@ export type Parser = {
     _Unary: (self: Parser) -> Expression,
     _Primary: (self: Parser) -> Expression,
 
+    _Statement: (self: Parser) -> Statement,
+    _ExpressionStatement: (self: Parser) -> Statement,
+    _SelectStatement: (self: Parser) -> Statement,
+
     _Match: (self: Parser, ...TokenType) -> boolean,
     _Check: (self: Parser, type: TokenType) -> boolean,
     _Advance: (self: Parser) -> Token,
@@ -132,6 +136,24 @@ export type UnaryExpression = Expression & {
     Operator: Token,
     Right: Expression,
 }
+
+-- statements
+
+export type Statement<T = any> = {
+    -- new: () -> Statement, -- actually exists but optionally leave this out for now so that the superclasses constructors properly get their typings
+
+    -- the below should be implemented for each class inheriting from Statement
+    Accept: (self: Statement<T>, visitor: any) -> T,
+
+    __tostring: (self: Statement<T>) -> string,
+}
+
+export type ExpressionStatement = Statement & {
+    new: (expression: Expression) -> ExpressionStatement,
+    Expression: Expression
+}
+
+-- end statements
 
 -- end expressions
 

@@ -1,6 +1,6 @@
 local Types = require(script.Parent.Parent.Types)
 
-local TokenType = require(script.Parent.Parent.Enums.TokenType) :: Types.TokenTypeEnum
+local TokenType = require(script.Parent.Parent.Enums.TokenType)
 
 local BinaryExpression = require(script.Parent.Expressions.BinaryExpression)
 local UnaryExpression = require(script.Parent.Expressions.UnaryExpression)
@@ -20,13 +20,13 @@ function Parser.new(tokens: { Types.Token }): Types.Parser
 end
 
 function Parser.Parse(self: Types.Parser): Types.Expression?
-    local success, expression = pcall(self._Expression, self)
-
-    if success then
-        return expression
+    local statements = {} :: { Types.Statement }
+    while not self:_IsAtEnd() do
+        local statement = self:_Statement()
+        table.insert(statements, statement)
     end
 
-    return nil
+    return statements
 end
 
 function Parser._Match(self: Types.Parser, ...: Types.TokenType): boolean
@@ -74,6 +74,28 @@ end
 
 function Parser._Previous(self: Types.Parser): Types.Token
     return self._tokens[self._current - 1]
+end
+
+function Parser._Statement(self: Types.Parser): Types.Statement
+    if self:_Match(TokenType.SELECT) then
+        return self:_SelectStatement()
+    end
+
+    return self:_ExpressionStatement()
+end
+
+function Parser._SelectStatement(self: Types.Parser): Types.Statement
+    self:_Consume(TokenType.FROM, "Expect 'FROM' after 'SELECT'.")
+    local expr = self:_Expression()
+    self:_Consume(TokenType.WHERE, "Expect 'WHERE' after 'FROM'.")
+    local where = self:_Expression()
+    return expr, where
+end
+
+function Parser._ExpressionStatement(self: Types.Parser): Types.Statement
+    local expr = self:_Expression()
+    self:_Consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+    return expr
 end
 
 function Parser._Expression(self: Types.Parser): Types.Expression
@@ -129,7 +151,7 @@ function Parser._Factor(self: Types.Parser): Types.Expression
 end
 
 function Parser._Unary(self: Types.Parser): Types.Expression
-    if self:_Match(TokenType.BANG, TokenType.MINUS) then
+    if self:_Match(TokenType.NOT, TokenType.MINUS) then
         local operator = self:_Previous()
         local right = self:_Unary()
         return UnaryExpression.new(operator, right)
