@@ -4,8 +4,20 @@ queryStatement ::= selectStatement
 
 selectStatement ::= "SELECT" IDENTIFIER "FROM" IDENTIFIER whereClause?
 
-whereClause ::= "WHERE" condition*
+identifiers ::= IDENTIFIER ( "," IDENTIFIER )*
+
+whereClause ::= "WHERE" conditions
 
 condition ::= IDENTIFIER "=" IDENTIFIER
 
+conditions ::= condition (("AND" | "OR") condition)?
+
 literal ::= 'nil' | 'false' | 'true' | NUMBER | STRING
+
+expression ::= equality
+equality ::= comparison ( ( "!=" | "==" ) comparison )*
+comparison ::= term ( ( ">" | ">=" | "<" | "<=" ) term )*
+term ::= factor ( ( "-" | "+" ) factor )*
+factor ::= unary ( ( "/" | "*" ) unary )*
+unary ::= ( "!" | "-" ) unary | primary
+primary ::= NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER

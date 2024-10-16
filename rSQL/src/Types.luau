@@ -188,4 +188,12 @@ export type Interpreter = ExpressionVisitor<any> & StatementVisitor<nil> & { -- 
     _Execute: (self: Interpreter, statement: Statement) -> nil,
 }
 
+export type Environment = {
+    Values: {
+        [string]: any
+    },
+    Define: (self: Environment, name: string, value: any) -> (),
+    Get: (self: Environment, name: Token) -> any,
+}
+
 return nil
