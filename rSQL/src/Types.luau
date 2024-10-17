@@ -36,6 +36,8 @@ export type Parser = {
     _Unary: (self: Parser) -> Expression,
     _Primary: (self: Parser) -> Expression,
 
+    _Declaration: (self: Parser) -> Statement?,
+
     _Statement: (self: Parser) -> Statement,
     _ExpressionStatement: (self: Parser) -> Statement,
     _SelectStatement: (self: Parser) -> Statement,

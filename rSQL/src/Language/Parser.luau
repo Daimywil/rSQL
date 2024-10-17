@@ -28,6 +28,24 @@ function Parser.Parse(self: Types.Parser): { Types.Statement }
     return statements
 end
 
+function Parser._Declaration(self: Types.Parser): Types.Statement?
+    local success, result = pcall(function()
+        if self:_Match(TokenType.VAR) then
+            return self:_VarDeclaration()
+        end
+    
+        return self:_Statement()
+    end)
+
+    if success then
+        return result
+    end
+
+    self:_Synchronize()
+
+    return
+end
+
 function Parser._Match(self: Types.Parser, ...: Types.TokenType): boolean
     for _, type in {...} do
         if self:_Check(type) then
