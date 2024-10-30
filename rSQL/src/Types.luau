@@ -39,7 +39,6 @@ export type Parser = {
     _Declaration: (self: Parser) -> Statement?,
 
     _Statement: (self: Parser) -> Statement,
-    _ExpressionStatement: (self: Parser) -> Statement,
     _SelectStatement: (self: Parser) -> Statement,
 
     _Match: (self: Parser, ...TokenType) -> boolean,
@@ -99,6 +98,8 @@ export type Scanner = {
 
 -- expressions
 
+export type Visitor<T = any> = ExpressionVisitor<T> & StatementVisitor<T> & {}
+
 export type ExpressionVisitor<T = any> = {
     VisitBinaryExpression: (self: ExpressionVisitor<T>, expression: BinaryExpression) -> T,
     VisitGroupingExpression: (self: ExpressionVisitor<T>, expression: GroupingExpression) -> T,
@@ -107,7 +108,6 @@ export type ExpressionVisitor<T = any> = {
 }
 
 export type StatementVisitor<T = any> = {
-    VisitExpressionStatement: (self: StatementVisitor<T>, statement: ExpressionStatement) -> T,
     VisitSelectStatement: (self: StatementVisitor<T>, statement: SelectStatement) -> T,
 }
 
@@ -155,14 +155,15 @@ export type Statement<T = any> = {
     __tostring: (self: Statement<T>) -> string,
 }
 
-export type ExpressionStatement = Statement & {
-    new: (expression: Expression) -> ExpressionStatement,
-    Expression: Expression
+export type SelectStatement = Statement & {
+    new: (classes: { string }, fromExpressions: { Expression }, whereExpression: Expression?) -> SelectStatement,
+    Classes: { string },
+    FromExpressions: { Expression },
+    WhereExpression: Expression?,
 }
 
-export type SelectStatement = Statement & {
-    new: (expression: Expression) -> SelectStatement,
-    Expression: Expression
+export type SelectAllStatement = Statement & {
+    new: () -> SelectAllStatement,
 }
 
 -- end statements
@@ -180,6 +181,7 @@ export type Interpreter = ExpressionVisitor<any> & StatementVisitor<nil> & { -- 
     new: () -> Interpreter,
 
     Interpret: (self: Interpreter, expression: Expression) -> any,
+    _environment: Environment,
 
     _IsTruthy: (self: Interpreter, value: any) -> boolean,
     _IsEqual: (self: Interpreter, a: any, b: any) -> boolean,
@@ -191,6 +193,8 @@ export type Interpreter = ExpressionVisitor<any> & StatementVisitor<nil> & { -- 
 }
 
 export type Environment = {
+    new: () -> Environment,
+
     Values: {
         [string]: any
     },

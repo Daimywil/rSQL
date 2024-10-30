@@ -1,6 +1,9 @@
+local Selection = game:GetService("Selection")
+
 local Types = require(script.Parent.Parent.Types)
 
 local TokenType = require(script.Parent.Parent.Enums.TokenType)
+local Environment = require(script.Parent.Environment) :: Types.Environment
 local rSQL
 
 local Interpreter = {}
@@ -8,6 +11,7 @@ Interpreter.__index = Interpreter
 
 function Interpreter.new(type: Types.TokenType, lexeme: string, literal: any, line: number): Types.Interpreter
     local self = setmetatable({} :: Types.Interpreter, Interpreter)
+    self._environment = Environment.new()
     rSQL = rSQL or require(script.Parent.rSQL)
     return self
 end
@@ -22,6 +26,42 @@ function Interpreter.Interpret(self: Types.Interpreter, statements: { Types.Stat
     if not success then
         rSQL.RuntimeError(result)
     end
+end
+
+function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Types.SelectStatement): ()
+    local classes = statement.Classes
+    local fromExpressions = statement.FromExpressions
+    local whereExpression = statement.WhereExpression
+
+    local fromInstances = {} :: { Instance }
+    for _, fromExpression in fromExpressions do
+        local instance = self:_Evaluate(fromExpression)
+        if typeof(instance) ~= "Instance" then
+            self:_Error(fromExpression.Token, "Expected instance from expression.")
+        end
+        table.insert(fromInstances, instance)
+    end
+
+    local queriedInstances = {} :: { Instance }
+
+    for _, instance in fromInstances do
+        for _, descendant in instance:GetDescendants() do
+            table.insert(queriedInstances, descendant)
+        end
+    end
+
+    if whereExpression then
+        local filteredInstances = {} :: { Instance }
+        for _, instance in queriedInstances do
+            local result = self:_Evaluate(whereExpression)
+            if result then
+                table.insert(filteredInstances, instance)
+            end
+        end
+        queriedInstances = filteredInstances
+    end
+
+    Selection:Set(queriedInstances)
 end
 
 function Interpreter.VisitBinaryExpression(self: Types.Interpreter, expression: Types.BinaryExpression): any

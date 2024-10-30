@@ -2,7 +2,7 @@ program ::= queryStatement* EOF
 
 queryStatement ::= selectStatement
 
-selectStatement ::= "SELECT" IDENTIFIER "FROM" IDENTIFIER whereClause?
+selectStatement ::= "SELECT" ( identifiers | "*" ) "FROM" IDENTIFIER whereClause?
 
 identifiers ::= IDENTIFIER ( "," IDENTIFIER )*
 

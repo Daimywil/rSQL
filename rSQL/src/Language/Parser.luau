@@ -7,6 +7,8 @@ local UnaryExpression = require(script.Parent.Expressions.UnaryExpression)
 local LiteralExpression = require(script.Parent.Expressions.LiteralExpression)
 local GroupingExpression = require(script.Parent.Expressions.GroupingExpression)
 
+local SelectStatement = require(script.Parent.Statements.SelectStatement)
+
 local rSQL = require(script.Parent.rSQL) :: Types.rSQL
 
 local Parser = {}
@@ -30,8 +32,8 @@ end
 
 function Parser._Declaration(self: Types.Parser): Types.Statement?
     local success, result = pcall(function()
-        if self:_Match(TokenType.VAR) then
-            return self:_VarDeclaration()
+        if self:_Match(TokenType.SELECT) then
+            return self:_SelectStatement()
         end
     
         return self:_Statement()
@@ -98,21 +100,37 @@ function Parser._Statement(self: Types.Parser): Types.Statement
         return self:_SelectStatement()
     end
 
-    return self:_ExpressionStatement()
+    self:_Error(self:_Peek(), "Expect statement.")
+
+    return {} :: any
 end
 
 function Parser._SelectStatement(self: Types.Parser): Types.Statement
-    self:_Consume(TokenType.FROM, "Expect 'FROM' after 'SELECT'.")
-    local expr = self:_Expression()
-    self:_Consume(TokenType.WHERE, "Expect 'WHERE' after 'FROM'.")
-    local where = self:_Expression()
-    return expr, where
-end
+    local classNames = {}
+    if self:_Match(TokenType.STAR) then
+        -- keep classes table empty to select all classes
+    
+    else
+        classNames = { self:_Consume(TokenType.IDENTIFIER, "Expect class name after 'SELECT'.").Lexeme }
+        while self:_Match(TokenType.DOT) do
+            table.insert(classNames, self:_Consume(TokenType.IDENTIFIER, "Expect class name after '.'.").Lexeme)
+        end
+    end
 
-function Parser._ExpressionStatement(self: Types.Parser): Types.Statement
-    local expr = self:_Expression()
-    self:_Consume(TokenType.SEMICOLON, "Expect ';' after expression.")
-    return expr
+    self:_Consume(TokenType.FROM, "Expect 'FROM' after select clause.")
+
+    local fromExpressions = { self:_Expression() }
+    while self:_Match(TokenType.COMMA) do
+        table.insert(fromExpressions, self:_Expression())
+    end
+
+    local whereExpression: Types.Expression?
+
+    if self:_Match(TokenType.WHERE) then
+        whereExpression = self:_Expression()
+    end
+
+    return SelectStatement.new(classNames, fromExpressions, whereExpression)
 end
 
 function Parser._Expression(self: Types.Parser): Types.Expression
