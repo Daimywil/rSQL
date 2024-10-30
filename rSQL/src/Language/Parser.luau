@@ -7,6 +7,7 @@ local UnaryExpression = require(script.Parent.Expressions.UnaryExpression)
 local LiteralExpression = require(script.Parent.Expressions.LiteralExpression)
 local GroupingExpression = require(script.Parent.Expressions.GroupingExpression)
 local VariableExpression = require(script.Parent.Expressions.VariableExpression)
+local LogicalExpression = require(script.Parent.Expressions.LogicalExpression)
 
 local SelectStatement = require(script.Parent.Statements.SelectStatement)
 
@@ -111,7 +112,6 @@ function Parser._SelectStatement(self: Types.Parser): Types.Statement
     local classNames = {}
     if self:_Match(TokenType.STAR) then
         -- keep classes table empty to select all classes
-    
     else
         classNames = { self:_Consume(TokenType.IDENTIFIER, "Expect class name after 'SELECT'.").Lexeme }
         while self:_Match(TokenType.DOT) do
@@ -145,7 +145,7 @@ function Parser._LogicalOr(self: Types.Parser): Types.Expression
     while self:_Match(TokenType.OR) do
         local operator = self:_Previous()
         local right = self:_LogicalAnd()
-        expr = BinaryExpression.new(expr, operator, right)
+        expr = LogicalExpression.new(expr, operator, right)
     end
 
     return expr
@@ -157,7 +157,7 @@ function Parser._LogicalAnd(self: Types.Parser): Types.Expression
     while self:_Match(TokenType.AND) do
         local operator = self:_Previous()
         local right = self:_Equality()
-        expr = BinaryExpression.new(expr, operator, right)
+        expr = LogicalExpression.new(expr, operator, right)
     end
 
     return expr

@@ -1,7 +1,5 @@
 local Types = require(script.Parent.Parent.Types)
 
-local rSQL = require(script.Parent.rSQL)
-
 local Environment = {}
 Environment.__index = Environment
 
@@ -15,18 +13,8 @@ function Environment.Define(self: Types.Environment, name: string, value: any)
     self.Values[name] = value
 end
 
-function Environment.Get(self: Types.Environment, name: Types.Token): any
-    if self.Values[name.Lexeme] ~= nil then
-        return self.Values[name.Lexeme]
-    end
-
-    rSQL.RuntimeError({
-        Message = `Undefined variable '{name.Lexeme}'.`,
-        Token = name,
-    })
-    error("Undefined variable '" .. name.Lexeme .. "'.")
-
-    return
+function Environment.Get(self: Types.Environment, name: string): any
+    return self.Values[name]
 end
 
 return Environment

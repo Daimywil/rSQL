@@ -6,19 +6,12 @@ local TokenType = require(script.Parent.Parent.Enums.TokenType)
 local Environment = require(script.Parent.Environment) :: Types.Environment
 local rSQL
 
-local predefinedVariables = {
-    ["workspace"] = workspace
-}
-
 local Interpreter = {}
 Interpreter.__index = Interpreter
 
 function Interpreter.new(type: Types.TokenType, lexeme: string, literal: any, line: number): Types.Interpreter
     local self = setmetatable({} :: Types.Interpreter, Interpreter)
     self._environment = Environment.new()
-    for name, value in predefinedVariables do
-        self._environment:Define(name, value)
-    end
     rSQL = rSQL or require(script.Parent.rSQL)
     return self
 end
@@ -31,7 +24,7 @@ function Interpreter.Interpret(self: Types.Interpreter, statements: { Types.Stat
     end)
 
     if not success then
-        rSQL.RuntimeError(result)
+        -- rSQL.RuntimeError({})
     end
 end
 
@@ -122,8 +115,40 @@ function Interpreter.VisitBinaryExpression(self: Types.Interpreter, expression: 
     return nil
 end
 
+function Interpreter.VisitLogicalExpression(self: Types.Interpreter, expression: Types.LogicalExpression)
+    local left = self:_Evaluate(expression.Left)
+    local right = self:_Evaluate(expression.Right)
+
+    if expression.Operator.Type == TokenType.OR then
+        return self:_IsTruthy(left) or self:_IsTruthy(right)
+    elseif expression.Operator.Type == TokenType.AND then
+        return self:_IsTruthy(left) and self:_IsTruthy(right)
+    end
+
+    -- unreachable
+    return nil
+end
+
 function Interpreter.VisitVariableExpression(self: Types.Interpreter, expression: Types.VariableExpression): any
-    return self._environment:Get(expression.Name)
+    if expression.Name.Lexeme == "game" then
+        return game
+    elseif expression.Name.Lexeme == "workspace" then
+        return workspace
+    elseif game:FindFirstChild(expression.Name.Lexeme) then
+        return game[expression.Name.Lexeme]
+    end
+
+    if self._environment:Get("self") then
+        local selfInstance = self._environment:Get("self")
+        local success, propertyValue = pcall(function()
+            return selfInstance[expression.Name.Lexeme]
+        end)
+        if success and typeof(propertyValue) ~= "Instance" and typeof(propertyValue) ~= "function" then
+            return propertyValue
+        end
+    end
+
+    return self._environment:Get(expression.Name.Lexeme)
 end
 
 function Interpreter.VisitGroupingExpression(self: Types.Interpreter, expression: Types.GroupingExpression): any

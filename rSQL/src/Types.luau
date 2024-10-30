@@ -214,7 +214,7 @@ export type Environment = {
         [string]: any
     },
     Define: (self: Environment, name: string, value: any) -> (),
-    Get: (self: Environment, name: Token) -> any,
+    Get: (self: Environment, name: string) -> any,
 }
 
 return nil
