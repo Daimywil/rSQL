@@ -6,6 +6,7 @@ local BinaryExpression = require(script.Parent.Expressions.BinaryExpression)
 local UnaryExpression = require(script.Parent.Expressions.UnaryExpression)
 local LiteralExpression = require(script.Parent.Expressions.LiteralExpression)
 local GroupingExpression = require(script.Parent.Expressions.GroupingExpression)
+local VariableExpression = require(script.Parent.Expressions.VariableExpression)
 
 local SelectStatement = require(script.Parent.Statements.SelectStatement)
 
@@ -17,6 +18,7 @@ Parser.__index = Parser
 function Parser.new(tokens: { Types.Token }): Types.Parser
     local self = setmetatable({} :: Types.Parser, Parser)
     self._tokens = tokens
+    print(self._tokens)
     self._current = 1
     return self
 end
@@ -134,7 +136,31 @@ function Parser._SelectStatement(self: Types.Parser): Types.Statement
 end
 
 function Parser._Expression(self: Types.Parser): Types.Expression
-    return self:_Equality()
+    return self:_LogicalOr()
+end
+
+function Parser._LogicalOr(self: Types.Parser): Types.Expression
+    local expr = self:_LogicalAnd()
+
+    while self:_Match(TokenType.OR) do
+        local operator = self:_Previous()
+        local right = self:_LogicalAnd()
+        expr = BinaryExpression.new(expr, operator, right)
+    end
+
+    return expr
+end
+
+function Parser._LogicalAnd(self: Types.Parser): Types.Expression
+    local expr = self:_Equality()
+
+    while self:_Match(TokenType.AND) do
+        local operator = self:_Previous()
+        local right = self:_Equality()
+        expr = BinaryExpression.new(expr, operator, right)
+    end
+
+    return expr
 end
 
 function Parser._Equality(self: Types.Parser): Types.Expression
@@ -218,6 +244,10 @@ function Parser._Primary(self: Types.Parser): Types.Expression?
         return GroupingExpression.new(expr)
     end
 
+    if self:_Match(TokenType.IDENTIFIER) then
+        return VariableExpression.new(self:_Previous())
+    end
+
     self:_Error(self:_Peek(), "Expect expression.")
 
     return
@@ -262,7 +292,7 @@ end
 
 function Parser._Error(self: Types.Parser, token: Types.Token, message: string): ()
     rSQL.Error(token.Line, message)
-    error("")
+    error(`[line {token.Line}] Error: {message}`)
 end
 
 return Parser

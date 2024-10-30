@@ -29,6 +29,8 @@ export type Parser = {
     Parse: (self: Parser) -> { Statement},
 
     _Expression: (self: Parser) -> Expression,
+    _LogicalOr: (self: Parser) -> Expression,
+    _LogicalAnd: (self: Parser) -> Expression,
     _Equality: (self: Parser) -> Expression,
     _Comparison: (self: Parser) -> Expression,
     _Term: (self: Parser) -> Expression,
@@ -105,6 +107,8 @@ export type ExpressionVisitor<T = any> = {
     VisitGroupingExpression: (self: ExpressionVisitor<T>, expression: GroupingExpression) -> T,
     VisitLiteralExpression: (self: ExpressionVisitor<T>, expression: LiteralExpression) -> T,
     VisitUnaryExpression: (self: ExpressionVisitor<T>, expression: UnaryExpression) -> T,
+    VisitVariableExpression: (self: ExpressionVisitor<T>, expression: VariableExpression) -> T,
+    VisitLogicalExpression: (self: ExpressionVisitor<T>, expression: LogicalExpression) -> T,
 }
 
 export type StatementVisitor<T = any> = {
@@ -138,10 +142,21 @@ export type LiteralExpression = Expression & {
     Value: any,
 }
 
+export type LogicalExpression = Expression & {
+    Left: Expression,
+    Operator: Token,
+    Right: Expression,
+}
+
 export type UnaryExpression = Expression & {
     new: (operator: Token, right: Expression) -> UnaryExpression,
     Operator: Token,
     Right: Expression,
+}
+
+export type VariableExpression = Expression & {
+    new: (name: Token) -> VariableExpression,
+    Name: Token,
 }
 
 -- statements

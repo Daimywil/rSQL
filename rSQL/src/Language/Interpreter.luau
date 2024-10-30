@@ -6,12 +6,19 @@ local TokenType = require(script.Parent.Parent.Enums.TokenType)
 local Environment = require(script.Parent.Environment) :: Types.Environment
 local rSQL
 
+local predefinedVariables = {
+    ["workspace"] = workspace
+}
+
 local Interpreter = {}
 Interpreter.__index = Interpreter
 
 function Interpreter.new(type: Types.TokenType, lexeme: string, literal: any, line: number): Types.Interpreter
     local self = setmetatable({} :: Types.Interpreter, Interpreter)
     self._environment = Environment.new()
+    for name, value in predefinedVariables do
+        self._environment:Define(name, value)
+    end
     rSQL = rSQL or require(script.Parent.rSQL)
     return self
 end
@@ -46,19 +53,30 @@ function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Ty
 
     for _, instance in fromInstances do
         for _, descendant in instance:GetDescendants() do
-            table.insert(queriedInstances, descendant)
+            if #classes > 0 then
+                for _, class in classes do
+                    if descendant:IsA(class) then
+                        table.insert(queriedInstances, descendant)
+                        break
+                    end
+                end
+            else
+                table.insert(queriedInstances, descendant)
+            end
         end
     end
 
     if whereExpression then
         local filteredInstances = {} :: { Instance }
         for _, instance in queriedInstances do
+            self._environment:Define("self", instance)
             local result = self:_Evaluate(whereExpression)
             if result then
                 table.insert(filteredInstances, instance)
             end
         end
         queriedInstances = filteredInstances
+        self._environment:Define("self", nil)
     end
 
     Selection:Set(queriedInstances)
@@ -102,6 +120,10 @@ function Interpreter.VisitBinaryExpression(self: Types.Interpreter, expression: 
 
     -- unreachable
     return nil
+end
+
+function Interpreter.VisitVariableExpression(self: Types.Interpreter, expression: Types.VariableExpression): any
+    return self._environment:Get(expression.Name)
 end
 
 function Interpreter.VisitGroupingExpression(self: Types.Interpreter, expression: Types.GroupingExpression): any

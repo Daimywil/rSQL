@@ -20,7 +20,10 @@ function Environment.Get(self: Types.Environment, name: Types.Token): any
         return self.Values[name.Lexeme]
     end
 
-    rSQL.RuntimeError(name, `Undefined variable '{name.Lexeme}'.`)
+    rSQL.RuntimeError({
+        Message = `Undefined variable '{name.Lexeme}'.`,
+        Token = name,
+    })
     error("Undefined variable '" .. name.Lexeme .. "'.")
 
     return
