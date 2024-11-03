@@ -203,7 +203,7 @@ end
 function Parser._Factor(self: Types.Parser): Types.Expression
     local expr = self:_Unary()
 
-    while self:_Match(TokenType.SLASH, TokenType.STAR) do
+    while self:_Match(TokenType.SLASH, TokenType.SLASH_SLASH, TokenType.STAR, TokenType.MODULO) do
         local operator = self:_Previous()
         local right = self:_Unary()
         expr = BinaryExpression.new(expr, operator, right)

@@ -45,6 +45,14 @@ function Scanner._ScanToken(self: Types.Scanner)
         self:_AddToken(TokenType.MINUS)
     elseif char == "+" then
         self:_AddToken(TokenType.PLUS)
+    elseif char == "%" then
+        self:_AddToken(TokenType.MODULO)
+    elseif char == "/" then
+        if self:_Match("/") then
+            self:_AddToken(TokenType.SLASH_SLASH)
+        else
+            self:_AddToken(TokenType.SLASH)
+        end
     elseif char == ";" then
         self:_AddToken(TokenType.SEMICOLON)
     elseif char == "*" then

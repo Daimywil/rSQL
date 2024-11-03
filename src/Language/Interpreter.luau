@@ -68,6 +68,7 @@ function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Ty
         if instance == game then
             allDescendants = {} :: { Instance }
             for _, gameInstance in gameInstances do
+                table.insert(allDescendants, gameInstance)
                 for _, descendant in gameInstance:GetDescendants() do
                     table.insert(allDescendants, descendant)
                 end
@@ -110,31 +111,49 @@ function Interpreter.VisitBinaryExpression(self: Types.Interpreter, expression: 
     if expression.Operator.Type == TokenType.PLUS then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) + (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.MINUS then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) - (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.STAR then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) * (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.SLASH then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) / (tonumber(right) :: number)
+        
+    elseif expression.Operator.Type == TokenType.SLASH_SLASH then
+        self:_CheckNumberOperands(expression.Operator, left, right)
+        return (tonumber(left) :: number) // (tonumber(right) :: number)
+        
+    elseif expression.Operator.Type == TokenType.MODULO then
+        self:_CheckNumberOperands(expression.Operator, left, right)
+        return (tonumber(left) :: number) % (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.GREATER then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) > (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.GREATER_EQUAL then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) >= (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.LESS then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) < (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.LESS_EQUAL then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) <= (tonumber(right) :: number)
+        
     elseif expression.Operator.Type == TokenType.EQUAL_EQUAL then
         return self:_IsEqual(left, right)
+        
     elseif expression.Operator.Type == TokenType.BANG_EQUAL then
         return not self:_IsEqual(left, right)
+        
     elseif expression.Operator.Type == TokenType.CONCAT then
         return tostring(left) .. tostring(right)
     end

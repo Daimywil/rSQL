@@ -27,16 +27,18 @@ function rSQL.Run(source: string)
     local statements = parser:Parse()
 
     if rSQL.HadError then
+        warn("[rSQL] Parsing error. Please check your syntax.")
         return
     end
 
     interpreter:Interpret(statements)
 
     if rSQL.HadRuntimeError then
+        warn("[rSQL] Runtime error.")
         return
     end
 
-    print("Success!")
+    print("[rSQL] Execution completed successfully.")
 end
 
 function rSQL.Error(tokenOrLineNumber: Types.Token | number, message: string)

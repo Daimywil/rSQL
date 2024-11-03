@@ -6,6 +6,8 @@ local React = require(script.Parent.Parent.Packages.React)
 
 local useMotion = require(script.Parent.Hooks.UseMotion)
 
+local SyntaxHighlight = require(script.Parent.Parent.Language.SyntaxHighlight)
+
 local rSQL = require(script.Parent.Parent.Language.rSQL) :: Types.rSQL
 
 return function()
@@ -16,22 +18,41 @@ return function()
     local mainFrameRef = React.useRef(nil :: Frame?)
     local commandLineRef = React.useRef(nil :: TextBox?)
 
+    local syntaxLabelBinding, setSyntaxLabelBinding = React.useState("")
+
     React.useEffect(function()
         if isActive then
-            commandBarPositionMotion:spring(1)
+            commandBarPositionMotion:spring(1, {
+                damping = 1,
+                frequency = 0.3
+            })
         else
-            commandBarPositionMotion:spring(0)
+            commandBarPositionMotion:spring(0, {
+                damping = 1,
+                frequency = 0.3
+            })
         end
     end, {isActive})
 
     React.useEffect(function()
-        commandLineRef.current.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
-                rSQL.Run(commandLineRef.current.Text)
-            else
-                setActive(false)
+        local connections = {
+            commandLineRef.current.FocusLost:Connect(function(enterPressed)
+                if enterPressed then
+                    rSQL.Run(commandLineRef.current.Text)
+                else
+                    setActive(false)
+                end
+            end),
+            commandLineRef.current.Changed:Connect(function()
+                setSyntaxLabelBinding(SyntaxHighlight(commandLineRef.current.Text))
+            end)
+        }
+
+        return function()
+            for _, connection in connections do
+                connection:Disconnect()
             end
-        end)
+        end
     end, {})
 
     React.useEffect(function()
@@ -53,6 +74,8 @@ return function()
             con:Disconnect()
         end
     end, {})
+
+    print("rerendering")
 
 	return React.createElement("ScreenGui", {
 		Enabled = true,
@@ -100,7 +123,7 @@ return function()
 					SyntaxLabel = React.createElement("TextLabel", {
 						FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json"),
 						RichText = true,
-						Text = "",
+						Text = syntaxLabelBinding,
 						TextColor3 = Color3.fromRGB(204, 204, 204),
 						TextSize = 16,
 						TextXAlignment = Enum.TextXAlignment.Left,
