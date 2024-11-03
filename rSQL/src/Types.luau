@@ -36,6 +36,7 @@ export type Parser = {
     _Term: (self: Parser) -> Expression,
     _Factor: (self: Parser) -> Expression,
     _Unary: (self: Parser) -> Expression,
+    _Get: (self: Parser) -> Expression,
     _Primary: (self: Parser) -> Expression,
 
     _Declaration: (self: Parser) -> Statement?,
@@ -109,6 +110,7 @@ export type ExpressionVisitor<T = any> = {
     VisitUnaryExpression: (self: ExpressionVisitor<T>, expression: UnaryExpression) -> T,
     VisitVariableExpression: (self: ExpressionVisitor<T>, expression: VariableExpression) -> T,
     VisitLogicalExpression: (self: ExpressionVisitor<T>, expression: LogicalExpression) -> T,
+    VisitGetExpression: (self: ExpressionVisitor<T>, expression: GetExpression) -> T,
 }
 
 export type StatementVisitor<T = any> = {
@@ -157,6 +159,13 @@ export type UnaryExpression = Expression & {
 export type VariableExpression = Expression & {
     new: (name: Token) -> VariableExpression,
     Name: Token,
+}
+
+export type GetExpression = Expression & {
+    new: (object: Expression, name: Expression, nameToken: Token) -> GetExpression,
+    Object: Expression,
+    Name: Expression,
+    NameToken: Token,
 }
 
 -- statements

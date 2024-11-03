@@ -8,6 +8,7 @@ local LiteralExpression = require(script.Parent.Expressions.LiteralExpression)
 local GroupingExpression = require(script.Parent.Expressions.GroupingExpression)
 local VariableExpression = require(script.Parent.Expressions.VariableExpression)
 local LogicalExpression = require(script.Parent.Expressions.LogicalExpression)
+local GetExpression = require(script.Parent.Expressions.GetExpression)
 
 local SelectStatement = require(script.Parent.Statements.SelectStatement)
 
@@ -218,7 +219,24 @@ function Parser._Unary(self: Types.Parser): Types.Expression
         return UnaryExpression.new(operator, right)
     end
 
-    return self:_Primary()
+    return self:_Get()
+end
+
+function Parser._Get(self: Types.Parser): Types.Expression
+    local expr = self:_Primary()
+
+    while self:_Match(TokenType.DOT, TokenType.LEFT_BRACKET) do
+        if self:_Previous().Type == TokenType.DOT then
+            local name = self:_Consume(TokenType.IDENTIFIER, "Expect property name after '.'.")
+            expr = GetExpression.new(expr, LiteralExpression.new(name.Lexeme), name)
+        else
+            local name = self:_Expression()
+            self:_Consume(TokenType.RIGHT_BRACKET, "Expect ']' after expression.")
+            expr = GetExpression.new(expr, name, self:_Previous())
+        end
+    end
+
+    return expr
 end
 
 function Parser._Primary(self: Types.Parser): Types.Expression?

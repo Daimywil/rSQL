@@ -28,6 +28,25 @@ function Interpreter.Interpret(self: Types.Interpreter, statements: { Types.Stat
     end
 end
 
+-- we cannot do game:GetDescendants because it has children that we cannot access (it'll error) and we dont want to select CoreGui either for example
+-- so when 'game' is used in a from clause, we'll use these instances instead
+local gameInstances = {
+    game:GetService("Workspace"),
+    game:GetService("Players"),
+    game:GetService("Lighting"),
+    game:GetService("MaterialService"),
+    game:GetService("ReplicatedFirst"),
+    game:GetService("ReplicatedStorage"),
+    game:GetService("ServerScriptService"),
+    game:GetService("ServerStorage"),
+    game:GetService("StarterGui"),
+    game:GetService("StarterPack"),
+    game:GetService("StarterPlayer"),
+    game:GetService("Teams"),
+    game:GetService("SoundService"),
+    game:GetService("TextChatService"),
+}
+
 function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Types.SelectStatement): ()
     local classes = statement.Classes
     local fromExpressions = statement.FromExpressions
@@ -45,7 +64,16 @@ function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Ty
     local queriedInstances = {} :: { Instance }
 
     for _, instance in fromInstances do
-        for _, descendant in instance:GetDescendants() do
+        local allDescendants
+        if instance == game then
+            allDescendants = {} :: { Instance }
+            for _, gameInstance in gameInstances do
+                for _, descendant in gameInstance:GetDescendants() do
+                    table.insert(allDescendants, descendant)
+                end
+            end
+        end
+        for _, descendant in (allDescendants or instance:GetDescendants()) :: { Instance } do
             if #classes > 0 then
                 for _, class in classes do
                     if descendant:IsA(class) then
@@ -136,8 +164,11 @@ function Interpreter.VisitVariableExpression(self: Types.Interpreter, expression
         return workspace
     elseif game:FindFirstChild(expression.Name.Lexeme) then
         return game[expression.Name.Lexeme]
+    elseif expression.Name.Lexeme == "self" then
+        return self._environment:Get("self")
     end
 
+    -- check if self has a property with the name
     if self._environment:Get("self") then
         local selfInstance = self._environment:Get("self")
         local success, propertyValue = pcall(function()
@@ -171,6 +202,27 @@ function Interpreter.VisitUnaryExpression(self: Types.Interpreter, expression: T
 
     -- unreachable
     return nil
+end
+
+function Interpreter.VisitGetExpression(self: Types.Interpreter, expression: Types.GetExpression): any
+    local object = self:_Evaluate(expression.Object) :: Instance
+    local name = self:_Evaluate(expression.Name) :: string
+    if typeof(object) ~= "Instance" then
+        self:_Error(expression.NameToken, "Expected instance.")
+    end
+    if typeof(name) ~= "string" then
+        self:_Error(expression.NameToken, "Expected string as indexer.")
+    end
+
+    local success, propertyValue = pcall(function()
+        return object[name]
+    end)
+
+    if not success then
+        self:_Error(expression.NameToken, "Property or child not found.")
+    end
+
+    return propertyValue
 end
 
 function Interpreter._IsEqual(self: Types.Interpreter, a: any, b: any): boolean

@@ -33,6 +33,10 @@ function Scanner._ScanToken(self: Types.Scanner)
         self:_AddToken(TokenType.LEFT_PAREN)
     elseif char == ")" then
         self:_AddToken(TokenType.RIGHT_PAREN)
+    elseif char == "[" then
+        self:_AddToken(TokenType.LEFT_BRACKET)
+    elseif char == "]" then
+        self:_AddToken(TokenType.RIGHT_BRACKET)
     elseif char == "," then
         self:_AddToken(TokenType.COMMA)
     elseif char == "." then
