@@ -187,7 +187,7 @@ function Scanner._Peek(self: Types.Scanner): string
 end
 
 function Scanner._PeekNext(self: Types.Scanner): string
-    if self._current + 1 >= #self.Source then
+    if self._current + 1 > #self.Source then
         return "\0"
     end
     return string.sub(self.Source, self._current + 1, self._current + 1)

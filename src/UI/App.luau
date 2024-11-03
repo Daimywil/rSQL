@@ -75,8 +75,6 @@ return function()
         end
     end, {})
 
-    print("rerendering")
-
 	return React.createElement("ScreenGui", {
 		Enabled = true,
         DisplayOrder = 100,
@@ -138,32 +136,32 @@ return function()
 				uICorner = React.createElement("UICorner"),
 			}),
 
-			Buttons = React.createElement("Frame", {
-				AnchorPoint = Vector2.new(1, 0),
-				AutomaticSize = Enum.AutomaticSize.XY,
-				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-				BackgroundTransparency = 1,
-				BorderColor3 = Color3.fromRGB(27, 42, 53),
-                LayoutOrder = 2
-			}, {
-				SettingsButton = React.createElement("ImageButton", {
-					Image = "rbxassetid://1402032193",
-					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-					BackgroundTransparency = 1,
-					BorderColor3 = Color3.fromRGB(27, 42, 53),
-				}),
+		-- 	Buttons = React.createElement("Frame", {
+		-- 		AnchorPoint = Vector2.new(1, 0),
+		-- 		AutomaticSize = Enum.AutomaticSize.XY,
+		-- 		BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		-- 		BackgroundTransparency = 1,
+		-- 		BorderColor3 = Color3.fromRGB(27, 42, 53),
+        --         LayoutOrder = 2
+		-- 	}, {
+		-- 		SettingsButton = React.createElement("ImageButton", {
+		-- 			Image = "rbxassetid://1402032193",
+		-- 			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+		-- 			BackgroundTransparency = 1,
+		-- 			BorderColor3 = Color3.fromRGB(27, 42, 53),
+		-- 		}),
 
-				GridLayout = React.createElement("UIGridLayout", {
-					CellSize = UDim2.fromOffset(25, 25),
-					HorizontalAlignment = Enum.HorizontalAlignment.Right,
-					SortOrder = Enum.SortOrder.LayoutOrder,
-				}),
-			}),
+		-- 		GridLayout = React.createElement("UIGridLayout", {
+		-- 			CellSize = UDim2.fromOffset(25, 25),
+		-- 			HorizontalAlignment = Enum.HorizontalAlignment.Right,
+		-- 			SortOrder = Enum.SortOrder.LayoutOrder,
+		-- 		}),
+		-- 	}),
 
-			ListLayout = React.createElement("UIListLayout", {
-				Padding = UDim.new(0, 4),
-				SortOrder = Enum.SortOrder.LayoutOrder,
-			}),
+		-- 	ListLayout = React.createElement("UIListLayout", {
+		-- 		Padding = UDim.new(0, 4),
+		-- 		SortOrder = Enum.SortOrder.LayoutOrder,
+		-- 	}),
 		}),
 	})
 end

@@ -19,6 +19,7 @@ function rSQL.Run(source: string)
     local scanner = Scanner.new(source)
 
     if rSQL.HadError then
+        warn("[rSQL] Lexer error. Please check your syntax.")
         return
     end
 

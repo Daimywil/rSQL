@@ -20,7 +20,6 @@ Parser.__index = Parser
 function Parser.new(tokens: { Types.Token }): Types.Parser
     local self = setmetatable({} :: Types.Parser, Parser)
     self._tokens = tokens
-    print(self._tokens)
     self._current = 1
     return self
 end
@@ -115,7 +114,7 @@ function Parser._SelectStatement(self: Types.Parser): Types.Statement
         -- keep classes table empty to select all classes
     else
         classNames = { self:_Consume(TokenType.IDENTIFIER, "Expect class name after 'SELECT'.").Lexeme }
-        while self:_Match(TokenType.DOT) do
+        while self:_Match(TokenType.COMMA) do
             table.insert(classNames, self:_Consume(TokenType.IDENTIFIER, "Expect class name after '.'.").Lexeme)
         end
     end
