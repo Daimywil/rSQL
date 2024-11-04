@@ -15,7 +15,6 @@ return function()
 
     local commandBarPosition, commandBarPositionMotion = useMotion(0)
     
-    local mainFrameRef = React.useRef(nil :: Frame?)
     local commandLineRef = React.useRef(nil :: TextBox?)
 
     local syntaxLabelBinding, setSyntaxLabelBinding = React.useState("")
@@ -68,6 +67,12 @@ return function()
             end
             setActive(true)
             commandLineRef.current:CaptureFocus()
+            -- remove the space character added by pressing the keybind to open
+            task.wait()
+            local lastCharacter = commandLineRef.current.Text:sub(-1)
+            if lastCharacter == " " then
+                commandLineRef.current.Text = commandLineRef.current.Text:sub(1, -2)
+            end
         end)
 
         return function()
@@ -75,8 +80,11 @@ return function()
         end
     end, {})
 
+    local commandBarHeight = 27
+
 	return React.createElement("ScreenGui", {
 		Enabled = true,
+        IgnoreGuiInset = true,
         DisplayOrder = 100,
 	}, {
 		Main = React.createElement("Frame", {
@@ -86,19 +94,13 @@ return function()
 			BackgroundTransparency = 1,
 			BorderColor3 = Color3.fromRGB(27, 42, 53),
             Position = commandBarPosition:map(function(value)
-                if not mainFrameRef.current then
-                    return UDim2.new()
-                end
-                return UDim2.fromOffset(4,4 * value + mainFrameRef.current.AbsoluteSize.Y * value)
+                return UDim2.fromOffset(4,4 * value + commandBarHeight * value)
             end),
 			Size = UDim2.new(1, -8, 0, 0),
-            ref = mainFrameRef,
 		}, {
-			CommandBar = React.createElement("CanvasGroup", {
-				Active = true,
+			CommandBar = React.createElement("Frame", {
 				BackgroundColor3 = Color3.fromRGB(37, 37, 37),
 				BorderSizePixel = 0,
-				Selectable = true,
 				Size = UDim2.new(1, 0, 0, 27),
                 LayoutOrder = 1,
 			}, {
@@ -133,7 +135,7 @@ return function()
 					}),
 				}),
 
-				uICorner = React.createElement("UICorner"),
+				Corner = React.createElement("UICorner"),
 			}),
 
 		-- 	Buttons = React.createElement("Frame", {
