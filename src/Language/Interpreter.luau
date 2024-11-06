@@ -54,11 +54,16 @@ function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Ty
 
     local fromInstances = {} :: { Instance }
     for _, fromExpression in fromExpressions do
-        local instance = self:_Evaluate(fromExpression)
-        if typeof(instance) ~= "Instance" then
+        local expressionResult = self:_Evaluate(fromExpression)
+        if typeof(expressionResult) == "table" then
+            for _, instance in expressionResult do
+                table.insert(fromInstances, instance)
+            end
+        elseif typeof(expressionResult) == "Instance" then
+            table.insert(fromInstances, expressionResult)
+        else
             self:_Error(fromExpression.Token, "Expected instance from expression.")
         end
-        table.insert(fromInstances, instance)
     end
 
     local queriedInstances = {} :: { Instance }
@@ -185,6 +190,8 @@ function Interpreter.VisitVariableExpression(self: Types.Interpreter, expression
         return game[expression.Name.Lexeme]
     elseif expression.Name.Lexeme == "self" then
         return self._environment:Get("self")
+    elseif expression.Name.Lexeme == "$selected" then
+        return Selection:Get()
     end
 
     -- check if self has a property with the name

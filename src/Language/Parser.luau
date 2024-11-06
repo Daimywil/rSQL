@@ -11,6 +11,7 @@ local LogicalExpression = require(script.Parent.Expressions.LogicalExpression)
 local GetExpression = require(script.Parent.Expressions.GetExpression)
 
 local SelectStatement = require(script.Parent.Statements.SelectStatement)
+local UpdateStatement = require(script.Parent.Statements.UpdateStatement)
 
 local rSQL = require(script.Parent.rSQL) :: Types.rSQL
 
@@ -27,7 +28,7 @@ end
 function Parser.Parse(self: Types.Parser): { Types.Statement } 
     local statements = {} :: { Types.Statement }
     while not self:_IsAtEnd() do
-        table.insert(statements, self:_Statement())
+        table.insert(statements, self:_Declaration())
     end
 
     return statements
@@ -35,10 +36,6 @@ end
 
 function Parser._Declaration(self: Types.Parser): Types.Statement?
     local success, result = pcall(function()
-        if self:_Match(TokenType.SELECT) then
-            return self:_SelectStatement()
-        end
-    
         return self:_Statement()
     end)
 
@@ -101,6 +98,8 @@ end
 function Parser._Statement(self: Types.Parser): Types.Statement
     if self:_Match(TokenType.SELECT) then
         return self:_SelectStatement()
+    elseif self:_Match(TokenType.UPDATE) then
+        return self:_UpdateStatement()
     end
 
     self:_Error(self:_Peek(), "Expect statement.")
@@ -109,15 +108,7 @@ function Parser._Statement(self: Types.Parser): Types.Statement
 end
 
 function Parser._SelectStatement(self: Types.Parser): Types.Statement
-    local classNames = {}
-    if self:_Match(TokenType.STAR) then
-        -- keep classes table empty to select all classes
-    else
-        classNames = { self:_Consume(TokenType.IDENTIFIER, "Expect class name after 'SELECT'.").Lexeme }
-        while self:_Match(TokenType.COMMA) do
-            table.insert(classNames, self:_Consume(TokenType.IDENTIFIER, "Expect class name after '.'.").Lexeme)
-        end
-    end
+    local classNames = self:_ClassDeclarations()
 
     self:_Consume(TokenType.FROM, "Expect 'FROM' after select clause.")
 
@@ -133,6 +124,39 @@ function Parser._SelectStatement(self: Types.Parser): Types.Statement
     end
 
     return SelectStatement.new(classNames, fromExpressions, whereExpression)
+end
+
+function Parser._UpdateStatement(self: Types.Parser): Types.Statement
+    local classNames = self:_ClassDeclarations()
+
+    self:_Consume(TokenType.SET, "Expect 'SET' after class name.")
+
+    local setStatements = { self:_Expression() }
+    while self:_Match(TokenType.COMMA) do
+        table.insert(setStatements, self:_Expression())
+    end
+
+    local whereExpression: Types.Expression?
+
+    if self:_Match(TokenType.WHERE) then
+        whereExpression = self:_Expression()
+    end
+
+    return UpdateStatement.new(classNames, setStatements, whereExpression)
+end
+
+function Parser._ClassDeclarations(self: Types.Parser): { string }
+    local classNames = {}
+    if self:_Match(TokenType.STAR) then
+        -- keep classes table empty to select all classes
+    else
+        classNames = { self:_Consume(TokenType.IDENTIFIER, "Expect class name after 'SELECT'.").Lexeme }
+        while self:_Match(TokenType.COMMA) do
+            table.insert(classNames, self:_Consume(TokenType.IDENTIFIER, "Expect class name after '.'.").Lexeme)
+        end
+    end
+
+    return classNames
 end
 
 function Parser._Expression(self: Types.Parser): Types.Expression

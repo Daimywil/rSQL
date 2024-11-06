@@ -1,14 +1,22 @@
 program ::= queryStatement* EOF
 
-queryStatement ::= selectStatement
+queryStatement ::= selectStatement | updateStatement
 
-selectStatement ::= "SELECT" ( identifiers | "*" ) fromClause whereClause?
+selectStatement ::= "select" classSelector fromClause whereClause?
+
+updateStatement ::= "update" classSelector setClause fromClause
+
+classSelector ::= identifiers | "*"
+
+setClause ::= "set" assignment ( "," assignment )*
+
+assignment ::= IDENTIFIER "=" expression
 
 identifiers ::= IDENTIFIER ( "," IDENTIFIER )*
 
-fromClause ::= "FROM" expression ( "," expression )?
+fromClause ::= "from" expression ( "," expression )?
 
-whereClause ::= "WHERE" expression
+whereClause ::= "where" expression
 
 literal ::= 'nil' | 'false' | 'true' | NUMBER | STRING
 

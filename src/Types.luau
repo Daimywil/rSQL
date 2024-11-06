@@ -43,6 +43,11 @@ export type Parser = {
 
     _Statement: (self: Parser) -> Statement,
     _SelectStatement: (self: Parser) -> Statement,
+    _UpdateStatement: (self: Parser) -> Statement,
+
+    _AssignmentStatement: (self: Parser) -> Statement,
+
+    _ClassDeclarations: (self: Parser) -> { string },
 
     _Match: (self: Parser, ...TokenType) -> boolean,
     _Check: (self: Parser, type: TokenType) -> boolean,
@@ -186,8 +191,11 @@ export type SelectStatement = Statement & {
     WhereExpression: Expression?,
 }
 
-export type SelectAllStatement = Statement & {
-    new: () -> SelectAllStatement,
+export type UpdateStatement = Statement & {
+    new: (classes: { string }, fromExpressions: { Expression }, whereExpression: Expression?) -> UpdateStatement,
+    Classes: { string },
+    FromExpressions: { Expression },
+    WhereExpression: Expression?,
 }
 
 -- end statements
