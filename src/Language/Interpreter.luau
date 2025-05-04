@@ -17,14 +17,11 @@ function Interpreter.new(type: Types.TokenType, lexeme: string, literal: any, li
 end
 
 function Interpreter.Interpret(self: Types.Interpreter, statements: { Types.Statement }): ()
-    local success, result = pcall(function()
-        for _, statement in statements do
-            self:_Execute(statement)
+    for _, statement in statements do
+        self:_Execute(statement)
+        if rSQL.HadRuntimeError then
+            break
         end
-    end)
-
-    if not success then
-        -- rSQL.RuntimeError({})
     end
 end
 
@@ -52,29 +49,45 @@ function Interpreter.VisitSelectStatement(self: Types.Interpreter, statement: Ty
     local fromExpressions = statement.FromExpressions
     local whereExpression = statement.WhereExpression
 
-    local fromInstances = {} :: { Instance }
+    local fromInstances: { Instance | { Instance } } = {}
     for _, fromExpression in fromExpressions do
         local instance = self:_Evaluate(fromExpression)
-        if typeof(instance) ~= "Instance" then
-            self:_Error(fromExpression.Token, "Expected instance from expression.")
+        if typeof(instance) ~= "Instance" and typeof(instance) ~= "table" then
+            self:_Error(statement.Token, "Expected instance or table from where expression.")
         end
         table.insert(fromInstances, instance)
     end
 
-    local queriedInstances = {} :: { Instance }
+    local queriedInstances: { Instance } = {}
 
     for _, instance in fromInstances do
-        local allDescendants
-        if instance == game then
-            allDescendants = {} :: { Instance }
-            for _, gameInstance in gameInstances do
-                table.insert(allDescendants, gameInstance)
-                for _, descendant in gameInstance:GetDescendants() do
-                    table.insert(allDescendants, descendant)
+        local descendants: { Instance } = {}
+        if typeof(instance) == "table" then
+            for _, value in instance do
+                if typeof(value) == "Instance" then
+                    for _, descendant in value:GetDescendants() do
+                        table.insert(descendants, descendant)
+                    end
+                else
+                    self:_Error(statement.Token, "Expected instance from expression.")
                 end
             end
+        else
+            if instance == game then
+                for _, gameInstance in gameInstances do
+                    for _, descendant in gameInstance:GetDescendants() do
+                        table.insert(descendants, descendant)
+                    end
+                end
+            else
+                descendants = instance:GetDescendants()
+            end
         end
-        for _, descendant in (allDescendants or instance:GetDescendants()) :: { Instance } do
+
+        for _, descendant in descendants do
+            if table.find(queriedInstances, descendant) then
+                continue
+            end
             if #classes > 0 then
                 for _, class in classes do
                     if descendant:IsA(class) then
@@ -111,49 +124,49 @@ function Interpreter.VisitBinaryExpression(self: Types.Interpreter, expression: 
     if expression.Operator.Type == TokenType.PLUS then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) + (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.MINUS then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) - (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.STAR then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) * (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.SLASH then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) / (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.SLASH_SLASH then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) // (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.MODULO then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) % (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.GREATER then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) > (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.GREATER_EQUAL then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) >= (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.LESS then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) < (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.LESS_EQUAL then
         self:_CheckNumberOperands(expression.Operator, left, right)
         return (tonumber(left) :: number) <= (tonumber(right) :: number)
-        
+
     elseif expression.Operator.Type == TokenType.EQUAL_EQUAL then
         return self:_IsEqual(left, right)
-        
+
     elseif expression.Operator.Type == TokenType.BANG_EQUAL then
         return not self:_IsEqual(left, right)
-        
+
     elseif expression.Operator.Type == TokenType.CONCAT then
         return tostring(left) .. tostring(right)
     end
@@ -201,6 +214,14 @@ function Interpreter.VisitVariableExpression(self: Types.Interpreter, expression
     return self._environment:Get(expression.Name.Lexeme)
 end
 
+function Interpreter.VisitSpecialExpression(self: Types.Interpreter, expression: Types.VariableExpression): any
+    if expression.Name.Lexeme == "$selected" then
+        return Selection:Get()
+    end
+
+    return nil
+end
+
 function Interpreter.VisitGroupingExpression(self: Types.Interpreter, expression: Types.GroupingExpression): any
     return self:_Evaluate(expression.Expression)
 end
@@ -224,24 +245,46 @@ function Interpreter.VisitUnaryExpression(self: Types.Interpreter, expression: T
 end
 
 function Interpreter.VisitGetExpression(self: Types.Interpreter, expression: Types.GetExpression): any
-    local object = self:_Evaluate(expression.Object) :: Instance
+    local object = self:_Evaluate(expression.Object) :: Instance | { Instance }
     local name = self:_Evaluate(expression.Name) :: string
-    if typeof(object) ~= "Instance" then
-        self:_Error(expression.NameToken, "Expected instance.")
+    if typeof(object) ~= "Instance" and typeof(object) ~= "table" then
+        self:_Error(expression.NameToken, "Expected instance or table of instances.")
     end
     if typeof(name) ~= "string" then
         self:_Error(expression.NameToken, "Expected string as indexer.")
     end
 
-    local success, propertyValue = pcall(function()
-        return object[name]
-    end)
+    if typeof(object) == "Instance" then
+        local success, propertyValue = pcall(function()
+            return object[name]
+        end)
 
-    if not success then
-        self:_Error(expression.NameToken, "Property or child not found.")
+        if not success then
+            self:_Error(expression.NameToken, "Property or child not found.")
+        end
+
+        return propertyValue
+    else
+        local transformed = {}
+
+        for index, value in object do
+            if typeof(value) ~= "Instance" then
+                self:_Error(expression.NameToken, "Expected instance as value.")
+            end
+
+            local success, propertyValue = pcall(function()
+                return value[name]
+            end)
+
+            if not success then
+                self:_Error(expression.NameToken, "Property or child not found.")
+            end
+
+            transformed[index] = propertyValue
+        end
+
+        return transformed
     end
-
-    return propertyValue
 end
 
 function Interpreter._IsEqual(self: Types.Interpreter, a: any, b: any): boolean
@@ -276,8 +319,8 @@ function Interpreter._IsTruthy(self: Types.Interpreter, value: any): boolean
     return true
 end
 
-function Interpreter._Error(self: Types.Interpreter, token: Types.Token, message: string): nil
-    error({
+function Interpreter._Error(self: Types.Interpreter, token: Types.Token, message: string)
+    rSQL.RuntimeError({
         Token = token,
         Message = message,
     } :: Types.RuntimeError)

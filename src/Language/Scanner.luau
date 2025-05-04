@@ -13,7 +13,6 @@ function Scanner.new(source: string): Types.Scanner
     self._tokens = {}
     self._start = 1
     self._current = 1
-    self._line = 1
     return self
 end
 
@@ -23,7 +22,7 @@ function Scanner.ScanTokens(self: Types.Scanner): { Types.Token }
         self:_ScanToken()
     end
 
-    table.insert(self._tokens, Token.new(TokenType.EOF, "", nil, self._line))
+    table.insert(self._tokens, Token.new(TokenType.EOF, "", nil, self._current))
     return self._tokens
 end
 
@@ -67,7 +66,7 @@ function Scanner._ScanToken(self: Types.Scanner)
         if self:_Match("=") then
             self:_AddToken(TokenType.BANG_EQUAL)
         else
-            rSQL.Error(self._line, "Unexpected character.")
+            rSQL.Error(self._current, "Unexpected character.")
         end
     elseif char == ">" then
         if self:_Match("=") then
@@ -90,26 +89,25 @@ function Scanner._ScanToken(self: Types.Scanner)
     elseif char == "\t" then
         -- ignore tab
     elseif char == "\n" then
-        self._line += 1
+        -- ignore new line
+    elseif char == "$" then
+        self:_Special()
     elseif self:_IsDigit(char) then
         self:_Number()
     elseif self:_IsAlpha(char) then
         self:_Identifier()
     else
-        rSQL.Error(self._line, "Unexpected character.")
+        rSQL.Error(self._current, "Unexpected character.")
     end
 end
 
 function Scanner._String(self: Types.Scanner)
     while self:_Peek() ~= '"' and not self:_IsAtEnd() do
-        if self:_Peek() == "\n" then
-            self._line += 1
-        end
         self:_Advance()
     end
 
     if self:_IsAtEnd() then
-        rSQL.Error(self._line, "Unterminated string.")
+        rSQL.Error(self._current, "Unterminated string.")
         return
     end
 
@@ -149,6 +147,19 @@ function Scanner._Number(self: Types.Scanner)
     end
 
     self:_AddToken(TokenType.NUMBER, tonumber(string.sub(self.Source, self._start, self._current - 1)))
+end
+
+function Scanner._Special(self: Types.Scanner)
+    while self:_IsAlpha(self:_Peek()) do
+        self:_Advance()
+    end
+
+    local text = string.sub(self.Source, self._start + 1, self._current - 1)
+    if text:lower() == "selected" then
+        self:_AddToken(TokenType.SPECIAL_SELECTED)
+    else
+        rSQL.Error(self._current, `Unexpected special token: ${text}`)
+    end
 end
 
 function Scanner._Identifier(self: Types.Scanner)
@@ -213,7 +224,7 @@ end
 
 function Scanner._AddToken(self: Types.Scanner, type: Types.TokenType, literal: any)
     local text = string.sub(self.Source, self._start, self._current - 1)
-    table.insert(self._tokens, Token.new(type, text, literal, self._line))
+    table.insert(self._tokens, Token.new(type, text, literal, self._start))
 end
 
 function Scanner._IsAtEnd(self: Types.Scanner): boolean

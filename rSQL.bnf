@@ -21,4 +21,4 @@ term ::= factor ( ( "-" | "+" ) factor )*
 factor ::= unary ( ( "/" | "*" ) unary )*
 unary ::= ( "!" | "-" ) unary | get
 get ::= primary (( "." IDENTIFIER ) | "[" ( expression | STRING ) "]")*
-primary ::= NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
+primary ::= literal | "(" expression ")" | IDENTIFIER | $selected

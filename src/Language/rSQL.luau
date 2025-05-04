@@ -13,7 +13,7 @@ function rSQL.Run(source: string)
 
     local Interpreter = require(script.Parent.Interpreter :: any) :: Types.Interpreter -- circular dependency
     local Scanner = require(script.Parent.Scanner)
-    local Parser = require(script.Parent.Parser)  
+    local Parser = require(script.Parent.Parser)
 
     local interpreter = Interpreter.new()
     local scanner = Scanner.new(source)
@@ -45,18 +45,18 @@ end
 function rSQL.Error(tokenOrLineNumber: Types.Token | number, message: string)
     if typeof(tokenOrLineNumber) == "number" then
         rSQL._Report(tokenOrLineNumber, "", message)
-        return        
+        return
     end
-    
+
     if tokenOrLineNumber.Type == TokenType.EOF then
-        rSQL._Report(tokenOrLineNumber.Line, "at end", message)
+        rSQL._Report(tokenOrLineNumber.Column, "at end", message)
     else
-        rSQL._Report(tokenOrLineNumber.Line, `at '{tokenOrLineNumber.Lexeme}'`, message)
+        rSQL._Report(tokenOrLineNumber.Column, `at '{tokenOrLineNumber.Lexeme}'`, message)
     end
 end
 
 function rSQL.RuntimeError(err: Types.RuntimeError)
-    warn(`[rSQL] {err.Message}\n[line {err.Token.Line}]`)
+    warn(`[rSQL] {err.Message}\n[column {err.Token.Column}]`)
     rSQL.HadRuntimeError = true
 end
 

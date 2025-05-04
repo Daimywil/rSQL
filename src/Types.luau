@@ -6,17 +6,17 @@ export type RuntimeError = {
 }
 
 export type rSQL = {
-    Run: (source: string) -> nil,
+    Run: (source: string) -> boolean,
 
     _Interpreter: Interpreter,
 
     HadError: boolean,
     HadRuntimeError: boolean,
 
-    Error: (tokenOrLineNumber: Token | number, message: string) -> nil,
-    RuntimeError: (err: RuntimeError) -> nil,
+    Error: (tokenOrLineNumber: Token | number, message: string) -> (),
+    RuntimeError: (err: RuntimeError) -> (),
 
-    _Report: (line: number, where: string, message: string) -> nil,
+    _Report: (line: number, where: string, message: string) -> (),
 }
 
 -- parser
@@ -60,11 +60,11 @@ export type Parser = {
 -- scanner (lexer)
 
 export type Token = {
-    new: (type: TokenType, lexeme: string, literal: any, line: number) -> Token,
+    new: (type: TokenType, lexeme: string, literal: any, Column: number) -> Token,
     Type: TokenType,
     Lexeme: string,
     Literal: any,
-    Line: number,
+    Column: number,
 
     __tostring: (self: Token) -> string,
 }
@@ -74,24 +74,24 @@ export type Scanner = {
     _tokens: { Token },
     _start: number,
     _current: number,
-    _line: number,
-    
+
     _IsAtEnd: (self: Scanner) -> boolean,
-    _ScanToken: (self: Scanner) -> nil,
+    _ScanToken: (self: Scanner) -> (),
     _Advance: (self: Scanner) -> string,
     _Match: (self: Scanner, expected: string) -> boolean,
     _Peek: (self: Scanner) -> string,
     _PeekNext: (self: Scanner) -> string,
     _AddToken: (self: Scanner, type: TokenType, literal: any) -> (),
 
-    _String: (self: Scanner) -> nil,
-    _Number: (self: Scanner) -> nil,
-    _Identifier: (self: Scanner) -> nil,
+    _String: (self: Scanner) -> (),
+    _Number: (self: Scanner) -> (),
+    _Identifier: (self: Scanner) -> (),
+    _Special: (self: Scanner) -> (),
 
     _IsDigit: (self: Scanner, char: string) -> boolean,
     _IsAlpha: (self: Scanner, char: string) -> boolean,
     _IsAlphaNumeric: (self: Scanner, char: string) -> boolean,
-    
+
     Source: string,
 
     ScanTokens: (self: Scanner) -> { Token },
@@ -111,6 +111,7 @@ export type ExpressionVisitor<T = any> = {
     VisitVariableExpression: (self: ExpressionVisitor<T>, expression: VariableExpression) -> T,
     VisitLogicalExpression: (self: ExpressionVisitor<T>, expression: LogicalExpression) -> T,
     VisitGetExpression: (self: ExpressionVisitor<T>, expression: GetExpression) -> T,
+    VisitSpecialExpression: (self: ExpressionVisitor<T>, expression: SpecialExpression) -> T,
 }
 
 export type StatementVisitor<T = any> = {
@@ -161,6 +162,11 @@ export type VariableExpression = Expression & {
     Name: Token,
 }
 
+export type SpecialExpression = Expression & {
+    new: (name: Token) -> SpecialExpression,
+    Name: Token,
+}
+
 export type GetExpression = Expression & {
     new: (object: Expression, name: Expression, nameToken: Token) -> GetExpression,
     Object: Expression,
@@ -180,7 +186,8 @@ export type Statement<T = any> = {
 }
 
 export type SelectStatement = Statement & {
-    new: (classes: { string }, fromExpressions: { Expression }, whereExpression: Expression?) -> SelectStatement,
+    new: (token: Token, classes: { string }, fromExpressions: { Expression }, whereExpression: Expression?) -> SelectStatement,
+    Token: Token,
     Classes: { string },
     FromExpressions: { Expression },
     WhereExpression: Expression?,

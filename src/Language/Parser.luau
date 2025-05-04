@@ -9,6 +9,7 @@ local GroupingExpression = require(script.Parent.Expressions.GroupingExpression)
 local VariableExpression = require(script.Parent.Expressions.VariableExpression)
 local LogicalExpression = require(script.Parent.Expressions.LogicalExpression)
 local GetExpression = require(script.Parent.Expressions.GetExpression)
+local SpecialExpression = require(script.Parent.Expressions.SpecialExpression)
 
 local SelectStatement = require(script.Parent.Statements.SelectStatement)
 
@@ -24,7 +25,7 @@ function Parser.new(tokens: { Types.Token }): Types.Parser
     return self
 end
 
-function Parser.Parse(self: Types.Parser): { Types.Statement } 
+function Parser.Parse(self: Types.Parser): { Types.Statement }
     local statements = {} :: { Types.Statement }
     while not self:_IsAtEnd() do
         table.insert(statements, self:_Statement())
@@ -38,7 +39,7 @@ function Parser._Declaration(self: Types.Parser): Types.Statement?
         if self:_Match(TokenType.SELECT) then
             return self:_SelectStatement()
         end
-    
+
         return self:_Statement()
     end)
 
@@ -109,6 +110,8 @@ function Parser._Statement(self: Types.Parser): Types.Statement
 end
 
 function Parser._SelectStatement(self: Types.Parser): Types.Statement
+    local token = self:_Previous()
+
     local classNames = {}
     if self:_Match(TokenType.STAR) then
         -- keep classes table empty to select all classes
@@ -132,7 +135,7 @@ function Parser._SelectStatement(self: Types.Parser): Types.Statement
         whereExpression = self:_Expression()
     end
 
-    return SelectStatement.new(classNames, fromExpressions, whereExpression)
+    return SelectStatement.new(token, classNames, fromExpressions, whereExpression)
 end
 
 function Parser._Expression(self: Types.Parser): Types.Expression
@@ -257,12 +260,16 @@ function Parser._Primary(self: Types.Parser): Types.Expression?
 
     if self:_Match(TokenType.LEFT_PAREN) then
         local expr = self:_Expression()
-        self:_Consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")        
+        self:_Consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
         return GroupingExpression.new(expr)
     end
 
     if self:_Match(TokenType.IDENTIFIER) then
         return VariableExpression.new(self:_Previous())
+    end
+
+    if self:_Match(TokenType.SPECIAL_SELECTED) then
+        return SpecialExpression.new(self:_Previous())
     end
 
     self:_Error(self:_Peek(), "Expect expression.")

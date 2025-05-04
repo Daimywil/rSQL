@@ -48,5 +48,7 @@ return {
 	FALSE = "FALSE",
 	TRUE = "TRUE",
 
+    SPECIAL_SELECTED = "SPECIAL_SELECTED",
+
 	EOF = "EOF",
 }

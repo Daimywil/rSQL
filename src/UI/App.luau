@@ -14,7 +14,7 @@ return function()
     local isActive, setActive = React.useState(false)
 
     local commandBarPosition, commandBarPositionMotion = useMotion(0)
-    
+
     local commandLineRef = React.useRef(nil :: TextBox?)
 
     local syntaxLabelBinding, setSyntaxLabelBinding = React.useState("")
@@ -42,7 +42,7 @@ return function()
                     setActive(false)
                 end
             end),
-            commandLineRef.current.Changed:Connect(function()
+            commandLineRef.current:GetPropertyChangedSignal("Text"):Connect(function()
                 setSyntaxLabelBinding(SyntaxHighlight(commandLineRef.current.Text))
             end)
         }
